@@ -77,7 +77,11 @@ p{margin:0 0 12px}
 .vposter .play:after{content:"";position:absolute;left:30px;top:22px;border-left:24px solid #fff;border-top:16px solid transparent;border-bottom:16px solid transparent}
 .vposter .vlen{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.65);color:#fff;font-size:13px;padding:3px 8px;border-radius:8px}
 .linkbtn{background:none;border:0;padding:0;color:inherit;text-decoration:underline;font:inherit;cursor:pointer}
-.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video iframe,.video video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;background:#000}
+.video .vbar{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
+.video .vbar i{display:block;height:100%;width:0;background:#20a6f4}
+.video .vtap{position:absolute;inset:0;background:transparent;border:0;padding:0;cursor:pointer}
+.vhint{text-align:center;margin:4px 0 10px}
 </style>
 </head>
 <body>
@@ -107,8 +111,8 @@ setTimeout(function () {
 </script>
 <script>
 {
-const QV = "v2-online";
-const GG = [29, 35, 39, 45];
+const QV = "v3-online";
+const GG = [19, 24, 29, 35, 39, 45];
 const API = "https://script.google.com/macros/s/AKfycbx1UIdKftuj7zsLELqYGTGUNB0awbeTZt1OxDXLDsJR0BkDlhlBO4gSuY1XhkrfX9Fd/exec";
 const LIVE = !/[?&]vorschau=1/.test(location.search);
 /* Quelle aus dem Link (…/exec?src=greiz) für die Auswertung nach Verteilkanal */
@@ -170,9 +174,9 @@ const O = {
     { v: "stranger", l: "Nein" }
   ]
 };
-const MINI = `<div class="mini">Zur Erinnerung: Socke, die Tritte an Knöchel, Achillessehne, Schienbeinkante und Spann abfedert, im Schuh nicht rutscht und sich dünn wie eine normale Socke trägt.</div>`;
+const MINI = `<div class="mini">Zur Erinnerung: Socke, die im Lauf weich bleibt, bei Tritten an Knöchel, Achillessehne, Schienbeinkante und Spann hart wird, im Schuh nicht rutscht und sich dünn wie eine normale Socke trägt.</div>`;
 const CONCEPT = `<div class="concept"><b>Eine Fußballsocke, die drei Dinge verbindet</b><ul>
-<li>Sie federt Tritte an Knöchel, Achillessehne, Schienbeinkante und Spann ab, damit sie weniger wehtun.</li>
+<li>Im Lauf bleibt sie weich wie eine normale Socke. Bei einem Tritt wird sie an Knöchel, Achillessehne, Schienbeinkante und Spann hart und danach sofort wieder weich. So tun Tritte dort weniger weh.</li>
 <li>Eine Haftsohle sorgt dafür, dass der Fuß im Schuh nicht rutscht.</li>
 <li>Sie trägt sich trotzdem dünn wie eine normale Fußballsocke und stützt den Fuß gezielt.</li></ul>
 <p>Sie wird zusätzlich zum Schienbeinschoner getragen und ersetzt ihn nicht.</p></div>`;
@@ -238,7 +242,7 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <p>Sebastian Kaspari, Painout Gear (Gründungsvorhaben), Heidestraße 4, 39112 Magdeburg, painoutgear@gmail.com</p>
 <h2>Was gespeichert wird</h2>
 <ul><li>Deine Antworten auf die Fragen, ohne Namen. Statt der Postleitzahl nur die ersten zwei Ziffern.</li>
-<li>Technische Angaben zur Befragung: Zeitpunkt, Dauer, über welchen Link du gekommen bist und ob du das Erklärvideo abgespielt hast.</li>
+<li>Technische Angaben zur Befragung: Zeitpunkt, Dauer, über welchen Link du gekommen bist und ob du das Erklärvideo abgespielt und bis zum Ende angesehen hast.</li>
 <li>Nur wenn du es ausdrücklich möchtest: deine E-Mail-Adresse für die Benachrichtigung, wenn die Socke erhältlich ist. Sie wird getrennt von den Antworten gespeichert und lässt sich ihnen nicht zuordnen.</li></ul>
 <h2>Wofür</h2>
 <p>Die Antworten werden ausgewertet, um ein neues Produkt zu entwickeln und einen passenden Preis zu finden. Die E-Mail-Adresse wird nur für die Benachrichtigung genutzt und nicht weitergegeben.</p>
@@ -247,7 +251,7 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <h2>Wo die Daten liegen</h2>
 <p>Die Umfrageseite wird über GitHub Pages ausgeliefert (GitHub, Inc., San Francisco, USA). Beim Aufruf verarbeitet GitHub technische Daten wie deine IP-Adresse, um die Seite auszuliefern und vor Missbrauch zu schützen. Rechtsgrundlage ist unser berechtigtes Interesse an einer sicheren Bereitstellung der Seite (Art. 6 Abs. 1 lit. f DSGVO). Die Schriften sind in die Seite eingebettet, es werden keine Schriften von Drittanbietern geladen.</p>
 <p>Beim Absenden werden deine Antworten über Google Apps Script in Google Sheets gespeichert (Google Ireland Limited, Dublin). Dabei kann Google technische Daten wie deine IP-Adresse verarbeiten, auch in den USA. Google ist dafür nach dem EU-US Data Privacy Framework zertifiziert. Für die Auswertung werden die Antworten ohne E-Mail-Adressen zusätzlich in einem Auswertungswerkzeug (Claude von Anthropic) gespeichert.</p>
-<p>Im Verlauf der Umfrage kannst du ein kurzes Erklärvideo ansehen. Es liegt bei YouTube und wird erst geladen, wenn du auf das Vorschaubild tippst. Bis dahin besteht keine Verbindung zu YouTube. Nach dem Antippen wird es im erweiterten Datenschutzmodus (youtube-nocookie.com) abgespielt. Dabei erhält YouTube (Google Ireland Limited) technische Daten wie deine IP-Adresse und kann Cookies oder ähnliche Techniken einsetzen, auch mit Übermittlung in die USA. Rechtsgrundlage ist deine Einwilligung durch das Antippen (§ 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO). Wenn du das Video nicht abspielst, kannst du die Umfrage trotzdem vollständig ausfüllen.</p>
+<p>Im Verlauf der Umfrage siehst du ein kurzes Erklärvideo. Es wird wie die Umfrageseite selbst über GitHub Pages ausgeliefert. Es werden dafür keine Daten an YouTube oder andere Videodienste übertragen.</p>
 <h2>Wie lange</h2>
 <p>Antworten bis zum Ende der Auswertung, spätestens bis 31.12.2027. Die E-Mail-Adresse bis zur Benachrichtigung oder bis zu deinem Widerruf.</p>
 <h2>Deine Rechte</h2>
@@ -276,25 +280,41 @@ Q1099.4 911.3 1096.1 906.9 L1067.7 867.9 Q1063.4 863.3 1065.7 854.3 Z"/>
 </g>
 <path fill="#20a6f4" d="M851.6 911.3 1040.7 689.5 1064.2 689.5 875.3 911.3 Z"/>
 </svg>`;
-let videoOpen = false;
+let videoOpen = false, vStallT = null;
+const VIDEO_FILE = "video.mp4";
+function videoHint() {
+  if (r.videoDone) return "Danke! Du kannst das Video gern noch einmal ansehen oder weitermachen.";
+  if (r.videoError) return "Das Video lädt gerade nicht. Du kannst trotzdem weitermachen.";
+  return videoOpen ? "Weiter geht es, sobald das Video zu Ende ist." : "Bitte schau dir zuerst das kurze Video an (28 Sekunden). Danach geht es weiter.";
+}
 function videoBlock() {
-  if (!VIDEO) return "";
-  if (videoOpen) return `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${VIDEO}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="Erklärvideo" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
-  return `<button class="video vposter" data-act="playvideo" aria-label="Erklärvideo abspielen">${POSTER_LOGO}<span class="play"></span><span class="vlen">Video · 28 Sek.</span></button>
-  <p class="small muted">Bitte schau dir zuerst das kurze Video an. Es wird erst beim Antippen von YouTube geladen, dabei erhält Google technische Daten wie deine IP-Adresse. <button class="linkbtn" data-act="datenschutz">Datenschutz</button></p>`;
+  const hint = `<p class="small muted vhint" id="pgVhint">${videoHint()}</p>`;
+  if (videoOpen) return `<div class="video"><video id="pgVideo" src="${VIDEO_FILE}" playsinline webkit-playsinline preload="auto" aria-label="Erklärvideo"></video><button class="vtap" data-act="togglevideo" aria-label="Video abspielen oder anhalten"></button><div class="vbar"><i id="pgVbar"></i></div></div>${hint}`;
+  return `<button class="video vposter" data-act="playvideo" aria-label="Erklärvideo abspielen">${POSTER_LOGO}<span class="play"></span><span class="vlen">Video · 28 Sek.</span></button>${hint}`;
+}
+function videoUnlock(kind) {
+  if (kind === "done") r.videoDone = true; else if (!r.videoDone) r.videoError = kind;
+  clearTimeout(vStallT);
+  const b = document.querySelector('[data-act="next"]'); if (b) b.disabled = false;
+  const h = document.getElementById("pgVhint"); if (h) h.textContent = videoHint();
+}
+function bindVideo(startNow) {
+  const v = document.getElementById("pgVideo"); if (!v) return;
+  const bar = document.getElementById("pgVbar");
+  v.addEventListener("timeupdate", () => {
+    if (v.duration) { if (bar) bar.style.width = Math.min(100, v.currentTime / v.duration * 100) + "%"; if (v.currentTime >= v.duration - 0.4) videoUnlock("done"); }
+  });
+  v.addEventListener("ended", () => videoUnlock("done"));
+  v.addEventListener("playing", () => clearTimeout(vStallT));
+  v.addEventListener("error", () => videoUnlock("error"));
+  if (startNow) {
+    clearTimeout(vStallT);
+    vStallT = setTimeout(() => { if (!v.currentTime) videoUnlock("stall"); }, 20000);
+    const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+  }
 }
 const legalLinks = () => `<div class="legal-links"><button data-act="impressum">Impressum</button> · <button data-act="datenschutz">Datenschutz</button></div>`;
-/* Einstellungen aus dem Sheet: Erklärvideo und eigene Adresse */
-let VIDEO = "";
-try {
-  if (LIVE) fetch(API + "?action=config", { credentials: "omit" })
-    .then(res => res.json())
-    .then(c => {
-      if (c && /^[A-Za-z0-9_-]{11}$/.test(c.videoId || "")) { VIDEO = c.videoId; if (r.stepId === "concept" && view === "survey") render(); }
-    })
-    .catch(() => {});
-  else { const v = new URLSearchParams(location.search).get("video"); if (/^[A-Za-z0-9_-]{11}$/.test(v || "")) VIDEO = v; }
-} catch (e) {}
+const VIDEO = "dflct1-umfrage-final";
 const r = { id: uid(), startedAt: new Date().toISOString(), role: null, a: {}, gg: [], hist: [], stepId: "consent", contact: { email: "", ok: false } };
 let view = "survey", sending = false, sendErr = "", lastNav = 0;
 
@@ -342,7 +362,7 @@ function body() {
       ${nav(!!r.a.consent, "Los geht's")}${legalLinks()}`;
     case "single": return `${mini}<div class="q">${q}</div>${help}${opts(st.opts(r), r.a[st.id], "single")}${nav(r.a[st.id] != null)}`;
     case "multi": return `${mini}<div class="q">${q}</div>${help}${opts(st.opts(r), r.a[st.id], "multi", true)}${nav((r.a[st.id] || []).length > 0)}`;
-    case "concept": return `<div class="help">Stell dir bitte folgendes Produkt vor. Es ist noch nicht im Handel.</div>${videoBlock()}${CONCEPT}${nav(true)}`;
+    case "concept": return `<div class="help">Stell dir bitte folgendes Produkt vor. Es ist noch nicht im Handel.</div>${videoBlock()}${CONCEPT}${nav(!!(r.videoDone || r.videoError))}`;
     case "price": {
       const cur = r.a[st.id], val = (cur != null && cur !== "dk") ? String(cur).replace(".", ",") : "";
       const intro = st.id === "vw_too_exp" ? `<div class="help">Jetzt geht es um den Preis. Nenn einfach den Betrag, der dir spontan passend erscheint. Gemeint ist immer ein Paar.</div>` : "";
@@ -387,6 +407,7 @@ function render() {
   if (view === "screenout") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Danke dir!</h1><p class="muted">Für diese Umfrage suchen wir Spielerinnen und Spieler ab 16, Eltern und Trainer. Wenn du jünger als 16 bist, schick den Link gern an deine Mutter oder deinen Vater.</p></div>`; return; }
   app.innerHTML = `<div class="progress"><div style="width:${Math.round(progress() * 100)}%"></div></div><div class="card">${body()}</div>`;
   bindInputs();
+  if (document.getElementById("pgVideo")) bindVideo(false);
 }
 function bindInputs() {
   const pin = document.getElementById("priceIn");
@@ -422,7 +443,7 @@ function buildRecord() {
   return {
     id: r.id, qv: QV, status: "complete", startedAt: r.startedAt, completedAt: now.toISOString(),
     durationSec: Math.round((now - new Date(r.startedAt)) / 1000),
-    meta: { anlass: SRC ? "online: " + SRC : "online", bezug: r.a.bezug || "", modus: "self", short: true, test: false, kanal: "online", quelle: SRC, video: VIDEO || "", videoPlayed: !!r.videoPlayed },
+    meta: { anlass: SRC ? "online: " + SRC : "online", bezug: r.a.bezug || "", modus: "self", short: true, test: false, kanal: "online", quelle: SRC, video: VIDEO, videoPlayed: !!r.videoPlayed, videoDone: !!r.videoDone, videoError: r.videoError || "" },
     role: r.role, a: Object.assign({}, r.a), md: [], gg: r.gg, ggMax: ggMax(r.gg), vwState: vwState(r.a)
   };
 }
@@ -448,7 +469,8 @@ document.addEventListener("click", e => {
   const auto = () => setTimeout(() => { if (view === "survey" && r.stepId === sid) goNext(); }, 200);
   switch (act) {
     case "consent": r.a.consent = !r.a.consent; render(); break;
-    case "playvideo": videoOpen = true; r.videoPlayed = true; render(); break;
+    case "playvideo": videoOpen = true; r.videoPlayed = true; render(); bindVideo(true); break;
+    case "togglevideo": { const vv = document.getElementById("pgVideo"); if (vv) { if (vv.paused || vv.ended) { const pr = vv.play(); if (pr && pr.catch) pr.catch(() => {}); } else vv.pause(); } break; }
     case "impressum": openLegal("impressum"); break;
     case "datenschutz": openLegal("datenschutz"); break;
     case "legalback": view = returnView; render(); window.scrollTo(0, 0); break;
