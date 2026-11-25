@@ -253,8 +253,8 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <h2>Wofür</h2>
 <p>Die Antworten werden ausgewertet, um ein neues Produkt zu entwickeln und einen passenden Preis zu finden. Die E-Mail-Adresse wird nur für die Benachrichtigung genutzt, wenn die Socke erhältlich ist, und nicht weitergegeben.</p>
 <h2>E-Mail-Adresse: Bestätigung und Abmeldung</h2>
-<p>Nach dem Eintragen bekommst du eine Mail mit einem Bestätigungslink (Double-Opt-In). Erst wenn du ihn öffnest und bestätigst, schreiben wir dir. So ist sichergestellt, dass niemand fremde Adressen einträgt. Bestätigst du nicht, löschen wir die Adresse nach 30 Tagen.</p>
-<p>Jede Mail enthält einen Link zum Abmelden. Damit wird deine Adresse sofort gelöscht. Alternativ genügt eine kurze Mail an painoutgear@gmail.com. Die Mails verschicken wir über das Google-Konto von Painout Gear (Gmail).</p>
+<p>Nach dem Eintragen bekommst du eine Mail mit einem Bestätigungslink (Double-Opt-In). Erst wenn du ihn öffnest und bestätigst, schreiben wir dir. So ist sichergestellt, dass niemand fremde Adressen einträgt. Bestätigst du nicht, erinnern wir dich nach einer Woche ein einziges Mal und löschen die Adresse nach 30 Tagen.</p>
+<p>Jede Mail enthält einen Link zum Abmelden. Damit bist du sofort abgemeldet, und wir löschen deine Adresse. Alternativ genügt eine kurze Mail an painoutgear@gmail.com. Die Mails verschicken wir über ein Google-Konto von Painout Gear (Gmail).</p>
 <h2>Rechtsgrundlage</h2>
 <p>Deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit mit Wirkung für die Zukunft widerrufen, eine kurze Mail an painoutgear@gmail.com genügt.</p>
 <h2>Wo die Daten liegen</h2>
@@ -326,7 +326,7 @@ const legalLinks = () => `<div class="legal-links"><button data-act="impressum">
 const VIDEO = "dflct1-umfrage-final";
 const r = { id: uid(), startedAt: new Date().toISOString(), role: null, a: {}, gg: [], hist: [], stepId: "consent", contact: { email: "", ok: false } };
 let mailState = "";
-const mailInfo = () => mailState === "gesendet" ? `<p class="note" style="text-align:left"><b>Bitte bestätige noch deine E-Mail-Adresse.</b> Wir haben dir gerade eine Mail an ${esc(r.contact.email)} geschickt. Erst nach dem Klick auf den Link darin bekommst du Post von uns. Schau auch im Spam-Ordner nach.</p>`
+const mailInfo = () => mailState === "gesendet" ? `<p class="note" style="text-align:left"><b>Bitte bestätige noch deine E-Mail-Adresse.</b> In den nächsten Minuten bekommst du eine Mail an ${esc(r.contact.email)}. Erst nach dem Klick auf den Link darin bekommst du Post von uns. Schau auch im Spam-Ordner nach.</p>`
   : mailState === "fehler" ? `<p class="note" style="text-align:left">Die Bestätigungsmail konnte gerade nicht verschickt werden. Deine Adresse ist gespeichert, die Mail kommt in den nächsten Tagen.</p>`
   : mailState === "vorschau" ? `<p class="note" style="text-align:left">Vorschau: Es wurde keine Bestätigungsmail verschickt.</p>` : "";
 let view = "survey", sending = false, sendErr = "", lastNav = 0, lockUntil = 0, ggSel = null;

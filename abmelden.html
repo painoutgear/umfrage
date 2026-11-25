@@ -50,7 +50,7 @@ Q1099.4 911.3 1096.1 906.9 L1067.7 867.9 Q1063.4 863.3 1065.7 854.3 Z"/> </g> <p
 <script>
 (function () {
   var API = "https://script.google.com/macros/s/AKfycbx1UIdKftuj7zsLELqYGTGUNB0awbeTZt1OxDXLDsJR0BkDlhlBO4gSuY1XhkrfX9Fd/exec";
-  var MSG = {"geloescht": "<h1>Abgemeldet</h1><p>Deine E-Mail-Adresse ist gelöscht. Zur Bestätigung schicken wir dir gleich eine letzte Mail, danach hörst du nichts mehr von uns.</p>", "unbekannt": "<h1>Abgemeldet</h1><p>Deine E-Mail-Adresse steht nicht (mehr) auf unserer Liste. Du bekommst keine Mails von uns.</p>"};
+  var MSG = {"geloescht": "<h1>Abgemeldet</h1><p>Du bist abgemeldet. Wir löschen deine E-Mail-Adresse und schicken dir in den nächsten Minuten eine letzte Mail zur Bestätigung. Danach hörst du nichts mehr von uns.</p>", "unbekannt": "<h1>Abgemeldet</h1><p>Deine E-Mail-Adresse steht nicht (mehr) auf unserer Liste. Du bekommst keine Mails von uns.</p>"};
   var box = document.getElementById("box"), go = document.getElementById("go"), err = document.getElementById("err");
   var t = "";
   try { t = (new URLSearchParams(location.search).get("t") || "").replace(/[^a-f0-9]/g, "").slice(0, 40); } catch (e) {}
