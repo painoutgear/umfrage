@@ -48,6 +48,12 @@ p{margin:0 0 12px}
 .btn.sec{background:#fff;color:var(--black);border-color:var(--line)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--grey);min-height:44px;padding:6px 8px;font-weight:600}
 .btn:disabled{opacity:.35;cursor:not-allowed}
+.ggp{display:flex;align-items:baseline;gap:10px;margin:4px 0 10px}
+.ggp .lab{font-size:15px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.04em}
+.ggp .val{font-size:44px;font-weight:800;line-height:1;color:var(--blue);padding:6px 14px;border-radius:14px;background:var(--blue-l)}
+.ggp.neu .val{animation:ggpop .7s ease}
+@keyframes ggpop{0%{transform:scale(.7);background:#FFE08A}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.btn.ghost.sel{color:var(--blue);background:var(--blue-l);border-color:var(--blue)}
 .btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
 .concept{background:var(--black);color:#fff;border-radius:16px;padding:20px 22px;margin:4px 0 14px;position:relative;overflow:hidden}
@@ -316,7 +322,9 @@ function bindVideo(startNow) {
 const legalLinks = () => `<div class="legal-links"><button data-act="impressum">Impressum</button> · <button data-act="datenschutz">Datenschutz</button></div>`;
 const VIDEO = "dflct1-umfrage-final";
 const r = { id: uid(), startedAt: new Date().toISOString(), role: null, a: {}, gg: [], hist: [], stepId: "consent", contact: { email: "", ok: false } };
-let view = "survey", sending = false, sendErr = "", lastNav = 0;
+let view = "survey", sending = false, sendErr = "", lastNav = 0, lockUntil = 0, ggSel = null;
+const LOCK_MS = 450; /* Tipps direkt nach einem Fragenwechsel ignorieren (Doppeltipp-Schutz) */
+const lock = () => { lockUntil = Date.now() + LOCK_MS; };
 
 const step = id => STEPS.find(s => s.id === id);
 const visible = s => !s.show || s.show(r);
@@ -329,14 +337,14 @@ function goNext() {
   if (r.stepId === "role" && !r.role) { view = "screenout"; render(); return; }
   const nx = nextId(r.stepId);
   if (!nx) return;
-  r.hist.push(r.stepId); r.stepId = nx; render(); window.scrollTo(0, 0);
+  r.hist.push(r.stepId); r.stepId = nx; ggSel = null; lock(); render(); window.scrollTo(0, 0);
 }
 function goBack() {
   const st = step(r.stepId);
-  if (st.type === "gg" && r.gg.length) { r.gg.pop(); render(); return; }
+  if (st.type === "gg" && r.gg.length) { r.gg.pop(); ggSel = null; lock(); render(); return; }
   const prev = r.hist.pop(); if (!prev) return;
   r.stepId = prev; if (step(prev).type === "gg" && r.gg.length) r.gg.pop();
-  render(); window.scrollTo(0, 0);
+  ggSel = null; lock(); render(); window.scrollTo(0, 0);
 }
 
 const opts = (list, cur, act, multi) => `<div class="opts">${list.map(o => {
@@ -367,7 +375,7 @@ function body() {
       const cur = r.a[st.id], val = (cur != null && cur !== "dk") ? String(cur).replace(".", ",") : "";
       const intro = st.id === "vw_too_exp" ? `<div class="help">Jetzt geht es um den Preis. Nenn einfach den Betrag, der dir spontan passend erscheint. Gemeint ist immer ein Paar.</div>` : "";
       return `${MINI}${intro}<div class="q">${q}</div><div class="price"><input id="priceIn" inputmode="decimal" autocomplete="off" value="${esc(val)}" placeholder="0" aria-label="Preis in Euro"><b style="font-size:26px">€</b></div>
-      <button class="btn ghost" data-act="pricedk">Kann ich nicht sagen</button>${nav(cur != null && cur !== "dk")}`;
+      <button class="btn ghost ${cur === "dk" ? "sel" : ""}" data-act="pricedk">Kann ich nicht sagen</button>${nav(cur != null)}`;
     }
     case "vwcheck": {
       const f = (k, l) => `<div class="field"><label>${l}</label><div class="price" style="margin:2px 0"><input data-vw="${k}" inputmode="decimal" value="${esc(String(r.a[k]).replace(".", ","))}"><b>€</b></div></div>`;
@@ -378,13 +386,14 @@ function body() {
       const p = ggNext(r.gg);
       if (p == null) { setTimeout(goNext, 0); return ""; }
       const qq = W(r, `Angenommen, die Socke kostet ${p} € pro Paar. Wie wahrscheinlich würdest du sie kaufen?`, `Angenommen, die Socke kostet ${p} € pro Paar. Wie wahrscheinlich würdest du sie für dein Kind kaufen?`, `Angenommen, die Socke kostet ${p} € pro Paar. Wie wahrscheinlich würdest du sie deinem Team empfehlen?`);
-      return `${MINI}<div class="q">${esc(qq)}</div>${opts(O.pi, null, "gg")}${nav(false, null)}`;
+      const neu = r.gg.length > 0;
+      return `${MINI}<div class="ggp ${neu ? "neu" : ""}"><span class="lab">${neu ? "Neuer Preis" : "Preis"}</span><span class="val">${p} €</span></div><div class="q">${esc(qq)}</div>${opts(O.pi, ggSel, "gg")}${nav(ggSel != null)}`;
     }
     case "plz": {
       const cur = r.a.plz, ok = cur === "na" || /^\d{2}$/.test(cur || "");
       return `<div class="q">Wie lauten die ersten zwei Ziffern deiner Postleitzahl?</div><div class="help">Nur die ersten zwei, zum Beispiel 39 für Magdeburg. So sehen wir, ob es regionale Unterschiede gibt.</div>
       <div class="price"><input id="plzIn" inputmode="numeric" maxlength="2" autocomplete="off" value="${esc(cur && cur !== "na" ? cur : "")}" placeholder="39" aria-label="Erste zwei Ziffern der Postleitzahl"></div>
-      <button class="btn ghost" data-act="plzna">Möchte ich nicht sagen</button>${nav(ok)}`;
+      <button class="btn ghost ${cur === "na" ? "sel" : ""}" data-act="plzna">Möchte ich nicht sagen</button>${nav(ok)}`;
     }
     case "contact": {
       const c = r.contact, valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email || "");
@@ -414,6 +423,7 @@ function bindInputs() {
   if (pin) pin.addEventListener("input", () => {
     const v = parseEur(pin.value), id = r.stepId;
     if (v != null) setAns(id, v); else delete r.a[id];
+    const dk = document.querySelector('[data-act="pricedk"]'); if (dk) dk.classList.remove("sel");
     const b = document.querySelector('[data-act="next"]'); if (b) b.disabled = v == null;
   });
   document.querySelectorAll("[data-vw]").forEach(el => el.addEventListener("input", () => { const v = parseEur(el.value); if (v != null) setAns(el.getAttribute("data-vw"), v); }));
@@ -421,6 +431,7 @@ function bindInputs() {
   if (plz) plz.addEventListener("input", () => {
     plz.value = plz.value.replace(/\D/g, "").slice(0, 2);
     if (/^\d{2}$/.test(plz.value)) r.a.plz = plz.value; else delete r.a.plz;
+    const na = document.querySelector('[data-act="plzna"]'); if (na) na.classList.remove("sel");
     const b = document.querySelector('[data-act="next"]'); if (b) b.disabled = !r.a.plz;
   });
   const em = document.getElementById("email");
@@ -466,7 +477,7 @@ function submit(withEmail) {
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-act]"); if (!t) return;
   const act = t.getAttribute("data-act"), v = t.getAttribute("data-v"), sid = r.stepId;
-  const auto = () => setTimeout(() => { if (view === "survey" && r.stepId === sid) goNext(); }, 200);
+  if (Date.now() < lockUntil && ["single", "multi", "gg", "pricedk", "plzna", "next"].includes(act)) return;
   switch (act) {
     case "consent": r.a.consent = !r.a.consent; render(); break;
     case "playvideo": videoOpen = true; r.videoPlayed = true; render(); bindVideo(true); break;
@@ -474,22 +485,25 @@ document.addEventListener("click", e => {
     case "impressum": openLegal("impressum"); break;
     case "datenschutz": openLegal("datenschutz"); break;
     case "legalback": view = returnView; render(); window.scrollTo(0, 0); break;
-    case "next": goNext(); break;
+    case "next": {
+      if (step(sid).type === "gg") {
+        const p = ggNext(r.gg); if (p == null || ggSel == null) { if (p == null) goNext(); break; }
+        r.gg.push({ p, v: parseInt(ggSel, 10), acc: ggSel === "5" || ggSel === "4" }); ggSel = null;
+        if (ggNext(r.gg) == null) goNext(); else { lock(); render(); window.scrollTo(0, 0); }
+        break;
+      }
+      goNext(); break;
+    }
     case "back": goBack(); break;
-    case "single": setAns(sid, v); render(); auto(); break;
+    case "single": setAns(sid, v); render(); break;
     case "multi": {
       let cur = (r.a[sid] || []).slice();
       cur = cur.includes(v) ? cur.filter(x => x !== v) : cur.concat(v);
       setAns(sid, cur); render(); break;
     }
-    case "pricedk": setAns(sid, "dk"); goNext(); break;
-    case "plzna": r.a.plz = "na"; goNext(); break;
-    case "gg": {
-      const p = ggNext(r.gg); if (p == null) { goNext(); break; }
-      r.gg.push({ p, v: parseInt(v, 10), acc: v === "5" || v === "4" });
-      if (ggNext(r.gg) == null) goNext(); else { render(); window.scrollTo(0, 0); }
-      break;
-    }
+    case "pricedk": setAns(sid, "dk"); render(); break;
+    case "plzna": r.a.plz = "na"; render(); break;
+    case "gg": ggSel = v; render(); break;
     case "contactok": { const em = document.getElementById("email"); if (em) r.contact.email = em.value.trim(); r.contact.ok = !r.contact.ok; render(); break; }
     case "nocontact": submit(false); break;
     case "sendcontact": submit(true); break;
