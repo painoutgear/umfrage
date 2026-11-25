@@ -131,8 +131,13 @@ const LIVE = !/[?&]vorschau=1/.test(location.search);
 /* Quelle aus dem Link (…/exec?src=greiz) für die Auswertung nach Verteilkanal */
 let SRC = "";
 const cleanSrc = s => String(s || "").replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 40);
-try { SRC = cleanSrc(new URLSearchParams(location.search).get("src")); } catch (e) {}
-
+const SRC_RESERVIERT = ["src", "vorschau", "seite", "v", "t"];
+try {
+  const qp = new URLSearchParams(location.search);
+  SRC = cleanSrc(qp.get("src"));
+  if (!SRC) for (const [k, v] of qp) { if (v === "" && !SRC_RESERVIERT.includes(k.toLowerCase())) { SRC = cleanSrc(k).toLowerCase(); if (SRC) break; } }
+} catch (e) {}
+   
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => { try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {} return "o" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); };
 
@@ -459,7 +464,7 @@ function bindInputs() {
 /* Teilen: gleicher Link inkl. Quelle, damit Weiterleitungen dem Kanal zugerechnet werden */
 let EXEC_URL = "";
 function shareLink() {
-  const url = location.origin + location.pathname + (SRC ? "?src=" + SRC : "");
+  const url = location.origin + location.pathname + (SRC ? "?" + SRC : "");
   /* Emojis als Escape-Codes, damit sie beim Bearbeiten in einem Editor nicht kaputtgehen */
   const text = "Hallo zusammen! \u26BD\n\n" +
     "Kurze Bitte: Ein Fußballtrainer aus Magdeburg entwickelt eine neue Fußballsocke und sucht ehrliche Meinungen.\n\n" +
