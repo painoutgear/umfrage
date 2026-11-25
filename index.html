@@ -249,9 +249,12 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <h2>Was gespeichert wird</h2>
 <ul><li>Deine Antworten auf die Fragen, ohne Namen. Statt der Postleitzahl nur die ersten zwei Ziffern.</li>
 <li>Technische Angaben zur Befragung: Zeitpunkt, Dauer, über welchen Link du gekommen bist und ob du das Erklärvideo abgespielt und bis zum Ende angesehen hast.</li>
-<li>Nur wenn du es ausdrücklich möchtest: deine E-Mail-Adresse für die Benachrichtigung, wenn die Socke erhältlich ist. Sie wird getrennt von den Antworten gespeichert und lässt sich ihnen nicht zuordnen.</li></ul>
+<li>Nur wenn du es ausdrücklich möchtest: deine E-Mail-Adresse für die Benachrichtigung, wenn die Socke erhältlich ist. Sie wird getrennt von den Antworten gespeichert und nicht mit ihnen verknüpft. Dazu speichern wir den Tag der Eintragung, ob und wann du die Adresse bestätigt hast und wann wir die Bestätigungsmail geschickt haben.</li></ul>
 <h2>Wofür</h2>
-<p>Die Antworten werden ausgewertet, um ein neues Produkt zu entwickeln und einen passenden Preis zu finden. Die E-Mail-Adresse wird nur für die Benachrichtigung genutzt und nicht weitergegeben.</p>
+<p>Die Antworten werden ausgewertet, um ein neues Produkt zu entwickeln und einen passenden Preis zu finden. Die E-Mail-Adresse wird nur für die Benachrichtigung genutzt, wenn die Socke erhältlich ist, und nicht weitergegeben.</p>
+<h2>E-Mail-Adresse: Bestätigung und Abmeldung</h2>
+<p>Nach dem Eintragen bekommst du eine Mail mit einem Bestätigungslink (Double-Opt-In). Erst wenn du ihn öffnest und bestätigst, schreiben wir dir. So ist sichergestellt, dass niemand fremde Adressen einträgt. Bestätigst du nicht, löschen wir die Adresse nach 30 Tagen.</p>
+<p>Jede Mail enthält einen Link zum Abmelden. Damit wird deine Adresse sofort gelöscht. Alternativ genügt eine kurze Mail an painoutgear@gmail.com. Die Mails verschicken wir über das Google-Konto von Painout Gear (Gmail).</p>
 <h2>Rechtsgrundlage</h2>
 <p>Deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit mit Wirkung für die Zukunft widerrufen, eine kurze Mail an painoutgear@gmail.com genügt.</p>
 <h2>Wo die Daten liegen</h2>
@@ -259,10 +262,10 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <p>Beim Absenden werden deine Antworten über Google Apps Script in Google Sheets gespeichert (Google Ireland Limited, Dublin). Dabei kann Google technische Daten wie deine IP-Adresse verarbeiten, auch in den USA. Google ist dafür nach dem EU-US Data Privacy Framework zertifiziert. Für die Auswertung werden die Antworten ohne E-Mail-Adressen zusätzlich in einem Auswertungswerkzeug (Claude von Anthropic) gespeichert.</p>
 <p>Im Verlauf der Umfrage siehst du ein kurzes Erklärvideo. Es wird wie die Umfrageseite selbst über GitHub Pages ausgeliefert. Es werden dafür keine Daten an YouTube oder andere Videodienste übertragen.</p>
 <h2>Wie lange</h2>
-<p>Antworten bis zum Ende der Auswertung, spätestens bis 31.12.2027. Die E-Mail-Adresse bis zur Benachrichtigung oder bis zu deinem Widerruf.</p>
+<p>Antworten bis zum Ende der Auswertung, spätestens bis 31.12.2027. Die E-Mail-Adresse bis zur Benachrichtigung oder bis zu deiner Abmeldung, unbestätigte Adressen höchstens 30 Tage.</p>
 <h2>Deine Rechte</h2>
 <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung sowie auf Widerspruch und Datenübertragbarkeit. Da die Antworten keinen Namen enthalten, können wir einzelne Antworten meist nicht dir zuordnen. Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel beim Landesbeauftragten für den Datenschutz Sachsen-Anhalt.</p>
-<p class="small muted">Stand: November 2026</p></div>`;
+<p class="small muted">Stand: 25. November 2026</p></div>`;
 let legalView = "", returnView = "survey";
 function openLegal(which) { if (view !== "legal") returnView = view; legalView = which; view = "legal"; render(); window.scrollTo(0, 0); }
 const POSTER_LOGO = `<svg class="vlogo" viewBox="127 680 1346 242" aria-hidden="true">
@@ -322,6 +325,10 @@ function bindVideo(startNow) {
 const legalLinks = () => `<div class="legal-links"><button data-act="impressum">Impressum</button> · <button data-act="datenschutz">Datenschutz</button></div>`;
 const VIDEO = "dflct1-umfrage-final";
 const r = { id: uid(), startedAt: new Date().toISOString(), role: null, a: {}, gg: [], hist: [], stepId: "consent", contact: { email: "", ok: false } };
+let mailState = "";
+const mailInfo = () => mailState === "gesendet" ? `<p class="note" style="text-align:left"><b>Bitte bestätige noch deine E-Mail-Adresse.</b> Wir haben dir gerade eine Mail an ${esc(r.contact.email)} geschickt. Erst nach dem Klick auf den Link darin bekommst du Post von uns. Schau auch im Spam-Ordner nach.</p>`
+  : mailState === "fehler" ? `<p class="note" style="text-align:left">Die Bestätigungsmail konnte gerade nicht verschickt werden. Deine Adresse ist gespeichert, die Mail kommt in den nächsten Tagen.</p>`
+  : mailState === "vorschau" ? `<p class="note" style="text-align:left">Vorschau: Es wurde keine Bestätigungsmail verschickt.</p>` : "";
 let view = "survey", sending = false, sendErr = "", lastNav = 0, lockUntil = 0, ggSel = null;
 const LOCK_MS = 450; /* Tipps direkt nach einem Fragenwechsel ignorieren (Doppeltipp-Schutz) */
 const lock = () => { lockUntil = Date.now() + LOCK_MS; };
@@ -400,7 +407,7 @@ function body() {
       return `<div class="q">Fast geschafft. Möchtest du erfahren, wenn es die Socke gibt?</div>
       <div class="help">Freiwillig. Die E-Mail-Adresse wird getrennt von deinen Antworten gespeichert.</div>
       <div class="field"><label for="email">E-Mail-Adresse</label><input type="email" id="email" value="${esc(c.email)}" placeholder="name@beispiel.de" autocomplete="email"></div>
-      <div class="check ${c.ok ? "sel" : ""}" data-act="contactok"><span class="box"></span><span>Ich möchte per E-Mail informiert werden, wenn die Socke erhältlich ist. Die Adresse wird nur dafür genutzt, nicht weitergegeben und auf Wunsch gelöscht (painoutgear@gmail.com).</span></div>
+      <div class="check ${c.ok ? "sel" : ""}" data-act="contactok"><span class="box"></span><span>Ich möchte per E-Mail informiert werden, wenn die Socke erhältlich ist. Die Adresse wird nur dafür genutzt und nicht weitergegeben. Ich bekomme gleich eine Mail, mit der ich die Adresse bestätige. Abmelden geht jederzeit über den Link in jeder Mail, die Adresse wird dann gelöscht. Mehr in den <button type="button" class="linkbtn" data-act="datenschutz">Datenschutzhinweisen</button>.</span></div>
       ${sendErr ? `<div class="err">${esc(sendErr)}</div>` : ""}
       <div class="nav"><button class="btn sec" data-act="back">Zurück</button>
       <button class="btn sec" data-act="nocontact" ${sending ? "disabled" : ""}>Ohne E-Mail abschließen</button>
@@ -412,7 +419,7 @@ function body() {
 function render() {
   const app = document.getElementById("app");
   if (view === "legal") { app.innerHTML = `<div class="card">${legalView === "impressum" ? IMPRESSUM : DATENSCHUTZ}<div class="nav"><button class="btn" data-act="legalback">Zurück zur Umfrage</button></div></div>`; return; }
-  if (view === "done") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Vielen Dank!</h1><p class="muted">Deine Antworten sind angekommen. Du kannst das Fenster jetzt schließen.</p>${LIVE ? "" : `<p class="note">Vorschau: Es wurde nichts gespeichert.</p>`}${legalLinks()}<p class="small muted">Kennst du andere Fußballeltern, Spieler oder Trainer? Teile die Umfrage gern in deiner Mannschaftsgruppe.</p>${location.protocol === "https:" || !LIVE ? `<a class="btn" id="waShare" target="_blank" rel="noopener" href="${esc(shareLink())}">Per WhatsApp teilen</a>` : ""}</div>`; return; }
+  if (view === "done") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Vielen Dank!</h1><p class="muted">Deine Antworten sind angekommen. Du kannst das Fenster jetzt schließen.</p>${mailInfo()}${LIVE ? "" : `<p class="note">Vorschau: Es wurde nichts gespeichert.</p>`}${legalLinks()}<p class="small muted">Kennst du andere Fußballeltern, Spieler oder Trainer? Teile die Umfrage gern in deiner Mannschaftsgruppe.</p>${location.protocol === "https:" || !LIVE ? `<a class="btn" id="waShare" target="_blank" rel="noopener" href="${esc(shareLink())}">Per WhatsApp teilen</a>` : ""}</div>`; return; }
   if (view === "screenout") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Danke dir!</h1><p class="muted">Für diese Umfrage suchen wir Spielerinnen und Spieler ab 16, Eltern und Trainer. Wenn du jünger als 16 bist, schick den Link gern an deine Mutter oder deinen Vater.</p></div>`; return; }
   app.innerHTML = `<div class="progress"><div style="width:${Math.round(progress() * 100)}%"></div></div><div class="card">${body()}</div>`;
   bindInputs();
@@ -462,13 +469,14 @@ function submit(withEmail) {
   if (sending) return;
   const rec = buildRecord();
   const email = withEmail && r.contact.ok ? r.contact.email : "";
-  if (!LIVE) { view = "done"; render(); return; }
+  if (!LIVE) { mailState = email ? "vorschau" : ""; view = "done"; render(); return; }
   sending = true; sendErr = ""; render();
   /* Text als Inhalt: einfache Anfrage ohne Vorabprüfung, ohne Google-Cookies */
   fetch(API, { method: "POST", credentials: "omit", redirect: "follow", body: JSON.stringify({ rec: JSON.stringify(rec), email: email }) })
     .then(res => res.json())
     .then(d => {
       if (!d || !d.ok) throw new Error("nicht gespeichert");
+      mailState = email ? (d.mail === "fehler" ? "fehler" : d.mail === "gesendet" ? "gesendet" : "") : "";
       sending = false; view = "done"; render(); window.scrollTo(0, 0);
     })
     .catch(() => { sending = false; sendErr = "Das Senden hat nicht geklappt. Bitte prüfe deine Verbindung und tippe noch einmal."; render(); });
@@ -509,6 +517,7 @@ document.addEventListener("click", e => {
     case "sendcontact": submit(true); break;
   }
 });
+try { const seite = new URLSearchParams(location.search).get("seite"); if (seite === "datenschutz" || seite === "impressum") { returnView = "survey"; legalView = seite; view = "legal"; } } catch (e) {}
 render();
 window.__pgStarted = true;
 }
