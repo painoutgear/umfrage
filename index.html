@@ -131,13 +131,15 @@ const LIVE = !/[?&]vorschau=1/.test(location.search);
 /* Quelle aus dem Link (…/exec?src=greiz) für die Auswertung nach Verteilkanal */
 let SRC = "";
 const cleanSrc = s => String(s || "").replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 40);
+/* Zwei Schreibweisen: …/?src=fcm-damen (alt, gilt weiter) und kurz …/?fcm-damen (ab 25.11.2026).
+   Bei der kurzen Form zählt der erste Eintrag ohne Wert, der kein reservierter Name ist. */
 const SRC_RESERVIERT = ["src", "vorschau", "seite", "v", "t"];
 try {
   const qp = new URLSearchParams(location.search);
   SRC = cleanSrc(qp.get("src"));
   if (!SRC) for (const [k, v] of qp) { if (v === "" && !SRC_RESERVIERT.includes(k.toLowerCase())) { SRC = cleanSrc(k).toLowerCase(); if (SRC) break; } }
 } catch (e) {}
-   
+
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => { try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {} return "o" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); };
 
@@ -465,14 +467,16 @@ function bindInputs() {
 let EXEC_URL = "";
 function shareLink() {
   const url = location.origin + location.pathname + (SRC ? "?" + SRC : "");
-  /* Emojis als Escape-Codes, damit sie beim Bearbeiten in einem Editor nicht kaputtgehen */
-  const text = "Hallo zusammen! \u26BD\n\n" +
-    "Kurze Bitte: Ein Fußballtrainer aus Magdeburg entwickelt eine neue Fußballsocke und sucht ehrliche Meinungen.\n\n" +
-    "\u{1F64B} Gesucht: Eltern, Spieler/innen ab 16 Jahren und Trainer/innen" +
-    "\u23F1\uFE0F Dauer: etwa drei Minuten\n" +
-    "\u{1F512} Anonym\n\n" +
+  /* Text B (Er-Fassung), gleich wie „Text für Helfer“ in der iPad-App; Emojis als Escape-Codes, damit sie beim Bearbeiten nicht kaputtgehen */
+  const text = "Hallo zusammen \u26BD\n\n" +
+    "Kurze Bitte: Sebastian von Painout Gear, ein Fußballtrainer aus Magdeburg, entwickelt gerade eine neue Fußballsocke. Bevor sie in Produktion geht, will er wissen, was euch im Training und im Spiel wirklich nervt und was euch so eine Socke wert wäre.\n\n" +
+    "Die Umfrage ist anonym, dauert etwa drei Minuten und läuft direkt im Handy-Browser:\n" +
     "\u{1F449} " + url + "\n\n" +
-    "Danke fürs Mitmachen! \u{1F64F}";
+    "Mitmachen können:\n" +
+    "\u2022 Eltern von Fußballkindern\n" +
+    "\u2022 Spielerinnen und Spieler ab 16 Jahren\n" +
+    "\u2022 Trainerinnen und Trainer\n\n" +
+    "Gern auch an eure Mannschafts- und Elterngruppen weiterleiten. Danke! \u{1F64F}";
   return "https://wa.me/?text=" + encodeURIComponent(text);
 }
 function buildRecord() {
