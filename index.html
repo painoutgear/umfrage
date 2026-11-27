@@ -97,6 +97,9 @@ p{margin:0 0 12px}
 .video .vbar i{display:block;height:100%;width:0;background:#20a6f4}
 .video .vtap{position:absolute;inset:0;background:transparent;border:0;padding:0;cursor:pointer}
 .vhint{text-align:center;margin:4px 0 10px}
+.share{border-top:1px solid var(--line);margin-top:20px;padding-top:20px}
+.share .q{font-size:21px}
+.btn.wide{display:flex;width:100%;margin-top:10px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -457,7 +460,16 @@ function body() {
 function render() {
   const app = document.getElementById("app");
   if (view === "legal") { app.innerHTML = `<div class="card">${legalView === "impressum" ? IMPRESSUM : DATENSCHUTZ}<div class="nav"><button class="btn" data-act="legalback">Zurück zur Umfrage</button></div></div>`; return; }
-  if (view === "done") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Vielen Dank!</h1><p class="muted">Deine Antworten sind angekommen. Du kannst das Fenster jetzt schließen.</p>${mailInfo()}${LIVE ? "" : `<p class="note">Vorschau: Es wurde nichts gespeichert.</p>`}${legalLinks()}<p class="small muted">Kennst du andere Fußballeltern, Spieler oder Trainer? Teile die Umfrage gern in deiner Mannschaftsgruppe.</p>${location.protocol === "https:" || !LIVE ? `<a class="btn" id="waShare" target="_blank" rel="noopener" href="${esc(shareLink())}">Per WhatsApp teilen</a>` : ""}</div>`; return; }
+  if (view === "done") {
+    const canShare = location.protocol === "https:" || !LIVE;
+    const shareBox = canShare ? `<div class="share"><div class="q">Kennst du noch jemanden, der mitmachen würde?</div>
+      <p>Spieler, Eltern oder Trainer aus deinem Verein: Jede weitere Antwort bringt die Socke genauso weiter wie deine. Wenn du magst, teile die Umfrage in deiner Mannschafts- oder Elterngruppe.</p>
+      <a class="btn wide" id="waShare" target="_blank" rel="noopener" href="${esc(shareLink())}">Per WhatsApp teilen</a>
+      <button class="btn sec wide" data-act="copylink">Link kopieren</button>
+      <p class="small muted" id="copyHint" style="min-height:1.4em;margin:8px 0 0"></p></div>` : "";
+    app.innerHTML = `<div class="card" style="text-align:center;padding:32px 20px"><h1>Vielen Dank!</h1><p class="muted">Deine Antworten sind angekommen. Sie bringen die Socke ein Stück näher an den Start.</p>${mailInfo()}${LIVE ? "" : `<p class="note">Vorschau: Es wurde nichts gespeichert.</p>`}${shareBox}${legalLinks()}</div>`;
+    return;
+  }
   if (view === "screenout") { app.innerHTML = `<div class="card" style="text-align:center;padding:36px 20px"><h1>Danke dir!</h1><p class="muted">Für diese Umfrage suchen wir Spielerinnen und Spieler ab 16, Eltern und Trainer. Wenn du jünger als 16 bist, schick den Link gern an deine Mutter oder deinen Vater.</p></div>`; return; }
   app.innerHTML = `<div class="progress"><div style="width:${Math.round(progress() * 100)}%"></div></div><div class="card">${body()}</div>`;
   bindInputs();
@@ -489,18 +501,20 @@ function bindInputs() {
 
 /* Teilen: gleicher Link inkl. Quelle, damit Weiterleitungen dem Kanal zugerechnet werden */
 let EXEC_URL = "";
+const surveyUrl = () => location.origin + location.pathname + (SRC ? "?" + SRC : "");
 function shareLink() {
-  const url = location.origin + location.pathname + (SRC ? "?" + SRC : "");
-  /* Text B (Er-Fassung), gleich wie „Text für Helfer“ in der iPad-App; Emojis als Escape-Codes, damit sie beim Bearbeiten nicht kaputtgehen */
+  const url = surveyUrl();
+  /* Text B (Er-Fassung, Stand 27.11.2026), gleich wie „Text für Helfer“ in der iPad-App; Emojis als Escape-Codes, damit sie beim Bearbeiten nicht kaputtgehen */
   const text = "Hallo zusammen \u26BD\n\n" +
-    "Kurze Bitte: Sebastian von Painout Gear, ein Fußballtrainer aus Magdeburg, entwickelt gerade eine neue Fußballsocke. Bevor sie in Produktion geht, will er wissen, was euch im Training und im Spiel wirklich nervt und was euch so eine Socke wert wäre.\n\n" +
-    "Die Umfrage ist anonym, dauert etwa drei Minuten und läuft direkt im Handy-Browser:\n" +
-    "\u{1F449} " + url + "\n\n" +
+    "Kurze Bitte um eure Hilfe: Sebastian von Painout Gear, Fußballtrainer aus Magdeburg, entwickelt gerade eine neue Fußballsocke. Bevor sie in Produktion geht, will er wissen, ob ihr bei Tritten an Knöchel und Spann oder mit rutschenden Füßen im Schuh überhaupt ein Problem habt und wie ihr die Idee findet.\n\n" +
+    "Ehrliche Meinungen helfen am meisten, auch wenn euch die Idee nicht überzeugt. Jede Antwort bringt die Socke ein Stück näher an den Start.\n\n" +
+    "\u{1F449} " + url + "\n" +
+    "Anonym, dauert nur ein paar Minuten, direkt im Handy-Browser.\n\n" +
     "Mitmachen können:\n" +
     "\u2022 Eltern von Fußballkindern\n" +
     "\u2022 Spielerinnen und Spieler ab 16 Jahren\n" +
     "\u2022 Trainerinnen und Trainer\n\n" +
-    "Gern auch an eure Mannschafts- und Elterngruppen weiterleiten. Danke! \u{1F64F}";
+    "Wenn ihr mögt, leitet den Link gern in eure Mannschafts- oder Elterngruppe weiter. Danke euch! \u{1F64F}";
   return "https://wa.me/?text=" + encodeURIComponent(text);
 }
 function buildRecord() {
@@ -560,6 +574,13 @@ document.addEventListener("click", e => {
     case "plzna": r.a.plz = "na"; render(); break;
     case "gg": ggSel = v; render(); break;
     case "contactok": { const em = document.getElementById("email"); if (em) r.contact.email = em.value.trim(); r.contact.ok = !r.contact.ok; render(); break; }
+    case "copylink": {
+      const url = surveyUrl(), hint = document.getElementById("copyHint");
+      const ok = () => { if (hint) hint.textContent = "Link kopiert. Du kannst ihn jetzt einfügen, wo du magst."; };
+      const fail = () => { if (hint) hint.textContent = url; };
+      try { navigator.clipboard.writeText(url).then(ok, fail); } catch (e) { fail(); }
+      break;
+    }
     case "nocontact": submit(false); break;
     case "sendcontact": submit(true); break;
   }
