@@ -135,11 +135,16 @@ let SRC = "";
 const cleanSrc = s => String(s || "").replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 40);
 /* Zwei Schreibweisen: …/?src=fcm-damen (alt, gilt weiter) und kurz …/?fcm-damen (ab 25.11.2026).
    Bei der kurzen Form zählt der erste Eintrag ohne Wert, der kein reservierter Name ist. */
-const SRC_RESERVIERT = ["src", "vorschau", "seite", "v", "t"];
+const SRC_RESERVIERT = ["src", "vorschau", "seite", "v", "t", "video"];
 try {
   const qp = new URLSearchParams(location.search);
   SRC = cleanSrc(qp.get("src"));
   if (!SRC) for (const [k, v] of qp) { if (v === "" && !SRC_RESERVIERT.includes(k.toLowerCase())) { SRC = cleanSrc(k).toLowerCase(); if (SRC) break; } }
+} catch (e) {}
+/* Aufruf zählen (ab 26.11.2026): beim Öffnen nur Kürzel und Zeitpunkt, keine Antworten, nichts auf dem Gerät gespeichert.
+   Das Skript schreibt in den Tab „Aufrufe“; der Tab „Kanäle“ zählt je Kürzel. Vorschau zählt nicht. */
+try {
+  if (LIVE) fetch(API, { method: "POST", credentials: "omit", redirect: "follow", keepalive: true, body: JSON.stringify({ action: "open", src: SRC }) }).catch(() => {});
 } catch (e) {}
 
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -265,7 +270,8 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <p>E-Mail: <a href="mailto:painoutgear@gmail.com">painoutgear@gmail.com</a></p>
 <h2>Was gespeichert wird</h2>
 <ul><li>Deine Antworten auf die Fragen, ohne Namen. Statt der Postleitzahl nur die ersten zwei Ziffern.</li>
-<li>Technische Angaben zur Befragung: Zeitpunkt, Dauer, über welchen Link du gekommen bist und ob du das Erklärvideo abgespielt und bis zum Ende angesehen hast.</li>
+<li>Technische Angaben zur Befragung: Zeitpunkt, Dauer, über welchen Link du gekommen bist und ob du das Erklärvideo abgespielt und bis zum Ende angesehen hast. Vom Video gibt es zwei Fassungen, du siehst zufällig eine davon. Wir speichern, welche es war, um zu vergleichen, welche das Produkt besser erklärt.</li>
+<li>Beim Öffnen der Umfrage zählen wir den Aufruf: nur den Zeitpunkt und das Kürzel aus dem Link, ohne Antworten und ohne Angaben über dich. So sehen wir, wie oft die Umfrage über einen Weg geöffnet und wie oft sie ausgefüllt wurde. Auf deinem Gerät wird dafür nichts gespeichert.</li>
 <li>Nur wenn du es ausdrücklich möchtest: deine E-Mail-Adresse für die Benachrichtigung, wenn die Socke erhältlich ist. Sie wird getrennt von den Antworten gespeichert und nicht mit ihnen verknüpft. Dazu speichern wir den Tag der Eintragung, ob und wann du die Adresse bestätigt hast und wann wir die Bestätigungsmail geschickt haben.</li></ul>
 <h2>Das Kürzel im Link</h2>
 <p>Viele Links zur Umfrage enden mit einem kurzen Kürzel, zum Beispiel ?k7m2p. Es zeigt nur, über welchen Weg die Umfrage geteilt wurde, etwa über welche Gruppe oder welche Person sie weitergeleitet wurde. Es enthält keine Angaben über dich. Teilst du die Umfrage am Ende weiter, behält der Link dasselbe Kürzel.</p>
@@ -277,16 +283,17 @@ const DATENSCHUTZ = `<div class="legal"><h1>Datenschutzhinweise</h1>
 <p>Jede Mail enthält einen Link zum Abmelden. Damit bist du sofort abgemeldet, und wir löschen deine Adresse. Alternativ genügt eine kurze Mail an painoutgear@gmail.com. Die Mails verschicken wir über ein Google-Konto von Painout Gear (Gmail).</p>
 <h2>Rechtsgrundlage</h2>
 <p>Deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit mit Wirkung für die Zukunft widerrufen, eine kurze Mail an painoutgear@gmail.com genügt.</p>
+<p>Für das Zählen der Aufrufe: unser berechtigtes Interesse, zu erkennen, über welche Wege die Umfrage ankommt (Art. 6 Abs. 1 lit. f DSGVO). Gespeichert werden dabei nur Zeitpunkt und Kürzel.</p>
 <h2>Wo die Daten liegen</h2>
 <p>Die Umfrageseite wird über GitHub Pages ausgeliefert (GitHub, Inc., San Francisco, USA). Beim Aufruf verarbeitet GitHub technische Daten wie deine IP-Adresse, um die Seite auszuliefern und vor Missbrauch zu schützen. Dabei können Daten in die USA übermittelt werden. Wie GitHub diese Übermittlung absichert, steht in der <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Datenschutzerklärung von GitHub</a>. Rechtsgrundlage ist unser berechtigtes Interesse an einer sicheren Bereitstellung der Seite (Art. 6 Abs. 1 lit. f DSGVO). Die Schriften sind in die Seite eingebettet, es werden keine Schriften von Drittanbietern geladen.</p>
-<p>Beim Absenden werden deine Antworten über Google Apps Script in Google Sheets gespeichert (Google Ireland Limited, Dublin). Dabei kann Google technische Daten wie deine IP-Adresse verarbeiten, auch in den USA. Google ist dafür nach dem EU-US Data Privacy Framework zertifiziert. Mehr dazu in der <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.</p>
+<p>Beim Öffnen (Zählung des Aufrufs) und beim Absenden werden die Daten über Google Apps Script in Google Sheets gespeichert (Google Ireland Limited, Dublin). Dabei kann Google technische Daten wie deine IP-Adresse verarbeiten, auch in den USA. Google ist dafür nach dem EU-US Data Privacy Framework zertifiziert. Mehr dazu in der <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.</p>
 <p>Für die Auswertung werden die Antworten ohne E-Mail-Adressen zusätzlich mit Claude verarbeitet und gespeichert (Anthropic, PBC, San Francisco, USA). Dabei werden die Daten in die USA übermittelt. Mehr dazu in der <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Anthropic</a>.</p>
 <p>Im Verlauf der Umfrage siehst du ein kurzes Erklärvideo. Es wird wie die Umfrageseite selbst über GitHub Pages ausgeliefert. Es werden dafür keine Daten an YouTube oder andere Videodienste übertragen.</p>
 <h2>Wie lange</h2>
 <p>Die Antworten speichern wir, solange wir sie für die Entwicklung, die Preisgestaltung und die Markteinführung der Socke brauchen, spätestens bis zum 31.12.2030. Ergebnisse, die nur noch zusammengefasste Zahlen ohne einzelne Antworten enthalten, bewahren wir auch länger auf. Die E-Mail-Adresse speichern wir bis zur Benachrichtigung oder bis zu deiner Abmeldung, unbestätigte Adressen höchstens 30 Tage.</p>
 <h2>Deine Rechte</h2>
 <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung sowie auf Widerspruch und Datenübertragbarkeit. Da die Antworten keinen Namen enthalten, können wir einzelne Antworten meist nicht dir zuordnen. Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel beim Landesbeauftragten für den Datenschutz Sachsen-Anhalt.</p>
-<p class="small muted">Stand: 25. November 2026</p></div>`;
+<p class="small muted">Stand: 26. November 2026</p></div>`;
 let legalView = "", returnView = "survey";
 function openLegal(which) { if (view !== "legal") returnView = view; legalView = which; view = "legal"; render(); window.scrollTo(0, 0); }
 const POSTER_LOGO = `<svg class="vlogo" viewBox="127 680 1346 242" aria-hidden="true">
@@ -311,7 +318,17 @@ Q1099.4 911.3 1096.1 906.9 L1067.7 867.9 Q1063.4 863.3 1065.7 854.3 Z"/>
 <path fill="#20a6f4" d="M851.6 911.3 1040.7 689.5 1064.2 689.5 875.3 911.3 Z"/>
 </svg>`;
 let videoOpen = false, vStallT = null;
-const VIDEO_FILE = "video.mp4";
+/* A/B-Test Erklärvideo (ab 27.11.2026): Jeder Aufruf bekommt zufällig Fassung A (video.mp4, bisheriges Video)
+   oder B (video-b.mp4, „Schutz statt Socke“), 50:50. Nichts wird auf dem Gerät gespeichert, die Fassung steht im Datensatz.
+   Zum Testen erzwingen: ?video=a oder ?video=b an die Adresse hängen. */
+const VIDEOS = { A: { file: "video.mp4", id: "dflct1-umfrage-final" }, B: { file: "video-b.mp4", id: "dflct1-umfrage-b" } };
+let VARIANTE = "A";
+try {
+  const vq = (new URLSearchParams(location.search).get("video") || "").toUpperCase();
+  if (vq === "A" || vq === "B") VARIANTE = vq;
+  else { const u = new Uint8Array(1); crypto.getRandomValues(u); VARIANTE = u[0] < 128 ? "A" : "B"; }
+} catch (e) { VARIANTE = Math.random() < 0.5 ? "A" : "B"; }
+const VIDEO_FILE = VIDEOS[VARIANTE].file;
 function videoHint() {
   if (r.videoDone) return "Danke! Du kannst das Video gern noch einmal ansehen oder weitermachen.";
   if (r.videoError) return "Das Video lädt gerade nicht. Du kannst trotzdem weitermachen.";
@@ -344,7 +361,7 @@ function bindVideo(startNow) {
   }
 }
 const legalLinks = () => `<div class="legal-links"><button data-act="impressum">Impressum</button> · <button data-act="datenschutz">Datenschutz</button></div>`;
-const VIDEO = "dflct1-umfrage-final";
+const VIDEO = VIDEOS[VARIANTE].id;
 const r = { id: uid(), startedAt: new Date().toISOString(), role: null, a: {}, gg: [], hist: [], stepId: "consent", contact: { email: "", ok: false } };
 let mailState = "";
 const mailInfo = () => mailState === "gesendet" ? `<p class="note" style="text-align:left"><b>Bitte bestätige noch deine E-Mail-Adresse.</b> In den nächsten Minuten bekommst du eine Mail an ${esc(r.contact.email)}. Erst nach dem Klick auf den Link darin bekommst du Post von uns. Schau auch im Spam-Ordner nach.</p>`
@@ -392,7 +409,7 @@ function body() {
       return `<h1>Kurze Umfrage zu Fußballsocken</h1>
       <p>Es geht darum, was beim Fußball an Fuß und Unterschenkel stört. Das dauert etwa drei Minuten.</p>
       <p>Es gibt keine richtigen oder falschen Antworten. Am meisten hilft eine ehrliche Meinung, auch Kritik.</p>
-      <p class="small muted">Die Antworten werden anonym gespeichert, ohne Namen, und nur ausgewertet, um ein neues Produkt zu entwickeln. Durchgeführt von Sebastian Kaspari, Gründungsvorhaben aus Magdeburg. Wenn du abbrichst, wird nichts gespeichert. Details stehen in den Datenschutzhinweisen unten.</p>
+      <p class="small muted">Die Antworten werden anonym gespeichert, ohne Namen, und nur ausgewertet, um ein neues Produkt zu entwickeln. Durchgeführt von Sebastian Kaspari, Gründungsvorhaben aus Magdeburg. Wenn du abbrichst, werden keine Antworten gespeichert. Details stehen in den Datenschutzhinweisen unten.</p>
       ${LIVE ? "" : `<div class="note">Vorschau: In dieser Ansicht wird nichts gespeichert.</div>`}
       <div class="check ${r.a.consent ? "sel" : ""}" data-act="consent"><span class="box"></span><span>Ich bin einverstanden, dass meine Antworten anonym gespeichert und ausgewertet werden, wie in den Datenschutzhinweisen beschrieben.</span></div>
       ${nav(!!r.a.consent, "Los geht's")}${legalLinks()}`;
@@ -491,7 +508,7 @@ function buildRecord() {
   return {
     id: r.id, qv: QV, status: "complete", startedAt: r.startedAt, completedAt: now.toISOString(),
     durationSec: Math.round((now - new Date(r.startedAt)) / 1000),
-    meta: { anlass: SRC ? "online: " + SRC : "online", bezug: r.a.bezug || "", modus: "self", short: true, test: false, kanal: "online", quelle: SRC, video: VIDEO, videoPlayed: !!r.videoPlayed, videoDone: !!r.videoDone, videoError: r.videoError || "" },
+    meta: { anlass: SRC ? "online: " + SRC : "online", bezug: r.a.bezug || "", modus: "self", short: true, test: false, kanal: "online", quelle: SRC, video: VIDEO, videoVariante: VARIANTE, videoPlayed: !!r.videoPlayed, videoDone: !!r.videoDone, videoError: r.videoError || "" },
     role: r.role, a: Object.assign({}, r.a), md: [], gg: r.gg, ggMax: ggMax(r.gg), vwState: vwState(r.a)
   };
 }
